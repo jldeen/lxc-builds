@@ -2,8 +2,13 @@
 	l = !git lg -10
 	lg = log --all --graph --abbrev-commit --decorate --date=relative --format=format:'%C(bold blue)%h%C(reset) - %C(bold green)(%ar)%C(reset) %C(white)%s%C(reset) %C(dim white)- %an%C(reset)%C(bold yellow)%d%C(reset)' --all
 	create-pull-request = !sh -c 'stash pull-request $0 $@'
+[commit]
+	gpgsign = true
 [user]
 	name = Jessica Deen
+	email = jessicadeen@me.com
+	signingkey = 0A26547A7F82CA24
+[committer]
 	email = jessicadeen@me.com
 [push]
 	default = matching
