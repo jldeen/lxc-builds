@@ -1,0 +1,527 @@
+image:
+  distribution: "ubuntu"
+
+source:
+  downloader: debootstrap
+  same_as: gutsy
+  url: http://archive.ubuntu.com/ubuntu
+  keyserver: keyserver.ubuntu.com
+  keys:
+  - 0x790BC7277767219C42C86F933B4FE6ACC0B21F32
+  - 0xf6ecb3762474eda9d21b7022871920d1991bc93c
+
+targets:
+  lxc:
+    create_message: |-
+      You just created an {{ image.description }} container.
+
+      To enable SSH, run: apt install openssh-server
+      No default root or user password are set by LXC.
+    config:
+    - type: all
+      before: 5
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/ubuntu.common.conf
+
+    - type: user
+      before: 5
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/ubuntu.userns.conf
+
+    - type: all
+      after: 4
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/common.conf
+
+    - type: user
+      after: 4
+      content: |-
+        lxc.include = LXC_TEMPLATE_CONFIG/userns.conf
+
+    - type: all
+      content: |-
+        lxc.arch = {{ image.architecture_personality }}
+
+files:
+- path: /etc/hostname
+  generator: hostname
+
+- path: /etc/hosts
+  generator: hosts
+
+- path: /etc/resolvconf/resolv.conf.d/original
+  generator: remove
+
+- path: /etc/resolvconf/resolv.conf.d/tail
+  generator: remove
+
+- path: /etc/machine-id
+  generator: dump
+
+- path: /var/lib/dbus/machine-id
+  generator: remove
+
+- path: /etc/netplan/10-lxc.yaml
+  generator: dump
+  content: |-
+    network:
+      version: 2
+      ethernets:
+        eth0:
+          dhcp4: true
+          dhcp-identifier: mac
+  releases:
+  - bionic
+  - focal
+  - hirsute
+  - impish
+  - jammy
+  types:
+  - container
+  variants:
+  - default
+
+- path: /etc/network/interfaces
+  generator: dump
+  content: |-
+    # This file describes the network interfaces available on your system
+    # and how to activate them. For more information, see interfaces(5).
+
+    # The loopback network interface
+    auto lo
+    iface lo inet loopback
+
+    auto eth0
+    iface eth0 inet dhcp
+
+    source /etc/network/interfaces.d/*.cfg
+  releases:
+  - xenial
+  types:
+  - container
+
+- path: /etc/netplan/10-lxc.yaml
+  generator: dump
+  content: |-
+    network:
+      version: 2
+      ethernets:
+        enp5s0:
+          dhcp4: true
+          dhcp-identifier: mac
+  releases:
+  - bionic
+  - focal
+  - hirsute
+  - impish
+  - jammy
+  types:
+  - vm
+  variants:
+  - default
+  - desktop
+
+- path: /etc/network/interfaces
+  generator: dump
+  content: |-
+    # This file describes the network interfaces available on your system
+    # and how to activate them. For more information, see interfaces(5).
+
+    # The loopback network interface
+    auto lo
+    iface lo inet loopback
+
+    auto enp5s0
+    iface enp5s0 inet dhcp
+
+    source /etc/network/interfaces.d/*.cfg
+  releases:
+  - xenial
+  types:
+  - vm
+
+- name: meta-data
+  generator: cloud-init
+  variants:
+  - cloud
+
+- name: network-config
+  generator: cloud-init
+  variants:
+  - cloud
+
+- name: user-data
+  generator: cloud-init
+  variants:
+  - cloud
+
+- name: vendor-data
+  generator: cloud-init
+  variants:
+  - cloud
+
+- name: ext4
+  generator: fstab
+  types:
+  - vm
+
+- name: incus-agent
+  generator: incus-agent
+  types:
+  - vm
+
+- path: /etc/default/grub.d/50-lxd.cfg
+  generator: dump
+  content: |-
+    GRUB_RECORDFAIL_TIMEOUT=0
+    GRUB_TIMEOUT=0
+    GRUB_CMDLINE_LINUX_DEFAULT="${GRUB_CMDLINE_LINUX_DEFAULT} console=tty1 console=ttyS0"
+    GRUB_TERMINAL=console
+  types:
+  - vm
+
+- path: /etc/sudoers.d/90-lxd
+  generator: dump
+  mode: 0440
+  content: |-
+    # User rules for ubuntu
+    jldeen ALL=(ALL) NOPASSWD:ALL
+  variants:
+    - default
+
+- path: /etc/sshkeys/
+  generator: copy
+  source: sources/sshkeys/
+  variants:
+    - default
+    - cloud 
+    - vm  
+
+packages:
+  manager: apt
+  update: true
+  cleanup: true
+  sets:
+  - packages:
+    - fuse
+    - git  
+    - language-pack-en
+    - openssh-client
+    - sudo
+    - vim
+    - openssh-server
+    - ssh-import-id
+    - wget 
+    - htop
+    - unzip
+    - apt-transport-https 
+    - ca-certificates
+    - curl
+    - gnupg
+    - lsb-release
+    action: install
+
+  - packages:
+    - cloud-init
+    - openssh-client
+    - ssh-import-id  
+    action: install
+    variants:
+    - cloud
+
+  - packages:
+    - acpid
+    action: install
+    architectures:
+    - amd64
+    - arm64
+    types:
+    - vm
+
+  - packages:
+    - grub-efi-amd64-signed
+    - shim-signed
+    action: install
+    architectures:
+    - amd64
+    types:
+    - vm
+
+  - packages:
+    - grub-efi-arm64-signed
+    action: install
+    architectures:
+    - arm64
+    types:
+    - vm
+
+  - packages:
+    - shim-signed
+    action: install
+    architectures:
+    - arm64
+    releases:
+    - disco
+    - eoan
+    - focal
+    - hirsute
+    - impish
+    - jammy
+    types:
+    - vm
+
+  - packages:
+    - linux-virtual-hwe-16.04
+    action: install
+    releases:
+    - xenial
+    types:
+    - vm
+
+  - packages:
+    - linux-virtual
+    - snapd  
+    action: install
+    releases:
+    - bionic
+    - eoan
+    - focal
+    - hirsute
+    - impish
+    - jammy
+    types:
+    - vm
+
+  - packages:
+    - os-prober
+    action: remove
+    types:
+    - vm
+
+  - packages:
+    - cloud-guest-utils
+    action: install
+    types:
+    - vm
+
+  - packages:
+    - linux-image-generic
+    - ubuntu-desktop-minimal
+    action: install
+    variants:
+    - desktop
+
+  repositories:
+  - name: sources.list
+    url: |-
+      deb http://archive.ubuntu.com/ubuntu {{ image.release }} main restricted universe multiverse
+      deb http://archive.ubuntu.com/ubuntu {{ image.release }}-updates main restricted universe multiverse
+      deb http://security.ubuntu.com/ubuntu {{ image.release }}-security main restricted universe multiverse
+    architectures:
+    - amd64
+    - i386
+
+  - name: sources.list
+    url: |-
+      deb http://ports.ubuntu.com/ubuntu-ports {{ image.release }} main restricted universe multiverse
+      deb http://ports.ubuntu.com/ubuntu-ports {{ image.release }}-updates main restricted universe multiverse
+      deb http://ports.ubuntu.com/ubuntu-ports {{ image.release }}-security main restricted universe multiverse
+    architectures:
+    - armhf
+    - arm64
+    - powerpc
+    - powerpc64
+    - ppc64el
+    - riscv64
+actions:
+- trigger: post-update
+  action: |-
+    #!/bin/sh
+    set -eux
+
+    # Create the ubuntu user account
+    getent group sudo >/dev/null 2>&1 || groupadd --system sudo
+    useradd --create-home -s /bin/bash -G sudo -U jldeen
+    echo "jldeen  ALL=(ALL) NOPASSWD:ALL" | tee /etc/sudoers.d/jldeen
+
+  variants:
+  - default
+  - cloud  
+
+- trigger: post-packages
+  action: |-
+    #!/bin/bash
+    set -eux
+    
+    if [[ $(uname -i) == x86_64 ]]; then 
+      arch="amd64" 
+    else 
+      arch="arm64" 
+    fi
+    
+    # Get key from GitHub
+    su jldeen -c "ssh-import-id gh:jldeen"
+    
+    # Install zsh 
+    apt update -y 
+    apt install zsh zsh-autosuggestions zsh-syntax-highlighting fonts-powerline -y
+    su jldeen -c "curl -o /home/jldeen/install.sh https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+    su jldeen -c "sh /home/jldeen/install.sh --unattended"
+    rm -rf /home/jldeen/install.sh
+    chsh -s $(which zsh) jldeen
+    su jldeen -c "git clone --depth=1 https://github.com/romkatv/powerlevel10k.git /home/jldeen/.oh-my-zsh/custom/themes/powerlevel10k"
+    su jldeen -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/jldeen/.oh-my-zsh/plugins/zsh-syntax-highlighting"
+    su jldeen -c "git clone https://github.com/zsh-users/zsh-autosuggestions.git /home/jldeen/.oh-my-zsh/plugins/zsh-autosuggestions" 
+    rm -rf /home/jldeen/.zshrc
+    su jldeen -c "curl -o /home/jldeen/.zshrc https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/zsh"
+    su jldeen -c "curl -o /home/jldeen/.p10k.zsh https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/p10k" 
+    su jldeen -c "curl -o /home/jldeen/.alias https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/alias"
+    su jldeen -c "curl -o /home/jldeen/.kubefunc https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/kubefunc"
+    su jldeen -c "curl -o /home/jldeen/.functions https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/functions" 
+    
+    # Install docker
+    apt-get install ca-certificates curl gnupg lsb-release -y
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+    echo \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt-get update
+    apt-get install docker-ce docker-ce-cli containerd.io -y
+    usermod -aG docker jldeen
+    curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+    # Install Node
+    su jldeen -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash"
+
+    # Install Go
+    gover=1.21.6
+    wget https://golang.org/dl/go${gover}.linux-${arch}.tar.gz
+    rm -rf /usr/local/go && tar -C /usr/local -xzf go${gover}.linux-${arch}.tar.gz
+    su jldeen -c "echo 'export PATH=$PATH:/usr/local/go/bin:/home/jldeen/go/bin' >> /home/jldeen/.profile"
+
+    # Install Hugo
+    apt install hugo -y
+
+    # Install Git Config
+    su jldeen -c "curl -o /home/jldeen/.gitconfig https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/gitconfig"
+    
+    # Enable systemd-networkd
+    systemctl enable systemd-networkd
+  releases:
+  - bionic
+  - focal
+  - hirsute
+  - impish
+  - jammy
+
+- trigger: post-packages
+  action: |-
+    #!/bin/sh
+    set -eux
+
+    # Make sure the locale is built and functional
+    locale-gen en_US.UTF-8
+    update-locale LANG=en_US.UTF-8
+
+    # Cleanup underlying /run
+    mount -o bind / /mnt
+    rm -rf /mnt/run/*
+    umount /mnt
+
+    # Cleanup temporary shadow paths
+    rm /etc/*-
+
+- trigger: post-files
+  action: |-
+    #!/bin/sh
+    set -eux
+
+    TARGET="x86_64"
+    [ "$(uname -m)" = "aarch64" ] && TARGET="arm64"
+
+    update-grub
+    grub-install --uefi-secure-boot --target="${TARGET}-efi" --no-nvram --removable
+    update-grub
+    sed -i "s#root=[^ ]*#root=/dev/sda2#g" /boot/grub/grub.cfg
+  types:
+  - vm
+
+
+- trigger: post-files
+  action: |-
+    #!/bin/sh
+    set -eux
+    mv /etc/sshkeys/id_rsa /home/jldeen/.ssh/
+    mv /etc/sshkeys/id_rsa.pub /home/jldeen/.ssh/
+    mkdir -p /home/jldeen/.aws/
+    chown -R jldeen:jldeen /home/jldeen/.ssh/
+    chown -R jldeen:jldeen /home/jldeen/.aws/
+    su jldeen -c "chmod 600 /home/jldeen/.ssh/id_rsa"
+    mv /etc/sshkeys/credentials /home/jldeen/.aws/credentials
+
+    # Setup GPG 
+    mv /etc/sshkeys/keys.asc /home/jldeen/keys.asc
+    mv /etc/sshkeys/pass /home/jldeen/pass
+
+    su jldeen -c "gpg --list-keys"
+    su jldeen -c "gpg --pinentry-mode loopback --passphrase-file /home/jldeen/pass --import /home/jldeen/keys.asc"
+
+    su jldeen -c "git config --global user.signingkey 0A26547A7F82CA24"
+    su jldeen -c "git config --global commit.gpgsign true"
+
+    rm -rf /home/jldeen/keys.asc /home/jldeen/pass
+  variants:
+  - default
+  - vm
+  - cloud  
+
+- trigger: post-packages
+  action: |-
+    #!/bin/sh
+    set -eux
+
+    # Timezone
+    rm -f /etc/localtime
+    ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+    echo America/Los_Angeles > /etc/timezone
+
+    # Locale
+    echo en_US.UTF-8 UTF-8 > /etc/locale.gen
+    locale-gen
+    echo LANG=en_US.UTF-8 > /etc/locale.conf
+
+    # User
+    USERNAME="jldeen"
+    useradd ${USERNAME} -s /bin/bash -m -U -G adm,video,users
+    echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME}
+    chmod 600 /etc/sudoers.d/${USERNAME}
+
+    (
+    cat << EOF
+    [daemon]
+    AutomaticLogin=${USERNAME}
+    AutomaticLoginEnable=true
+    EOF
+    ) > /etc/gdm3/custom.conf
+
+    # Automatic disk resize
+    (
+    cat << EOF
+    [Unit]
+    Description=LXD - grow root partition
+
+    [Service]
+    Type=oneshot
+    ExecStartPre=-/usr/bin/growpart /dev/sda 2
+    ExecStart=/usr/sbin/resize2fs /dev/sda2
+
+    [Install]
+    WantedBy=default.target
+    EOF
+    ) > /etc/systemd/system/lxd-growpart.service
+    systemctl enable lxd-growpart
+  variants:
+  - desktop
+
+mappings:
+  architecture_map: debian

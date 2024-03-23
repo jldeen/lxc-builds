@@ -7,51 +7,35 @@ ifeq ($(ARCH),aarch64)
         URL += http://ports.ubuntu.com/ubuntu-ports
 endif
 
-.PHONY: go rust k8s ubuntu-vm ubuntu python all vm
+.PHONY: node gatsby hugo go python ecs all vm
+node:
+	incus image rm go || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="node"  node.yaml
+
+gatsby:
+	incus image rm go || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="gatsby"  gatsby.yaml
+
+hugo:
+	incus image rm go || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="hugo"  hugo.yaml
+
 go:
-	lxc image rm go || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="go"  go.yaml
-
-rust:
-	lxc image rm rust || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="rust"  rust.yaml
-
-k8s:
-	lxc image rm k8s || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="k8s"  k8s.yaml	
-
-k8s-vm:
-	lxc image rm k8s-vm || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) -o targets.lxd.vm.size=8294967296  --import-into-lxd="k8s-vm" --vm  k8s.yaml
-
-ubuntu-vm:
-	lxc image rm ubuntu-vm || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="ubuntu-vm" --vm  ubuntu.yaml
-
-ubuntu:
-	lxc image rm ubuntu || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="ubuntu" ubuntu.yaml
-
-docker:
-	lxc image rm docker || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="docker" docker.yaml
-
-docker-vm:
-	lxc image rm docker-vm || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="docker-vm" --vm  docker.yaml
+	incus image rm go || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="go"  go.yaml
 
 python:
 	lxc image rm python || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="python" python.yaml
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="python" python.yaml
 
 ecs:
-	lxc image rm ecs || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="ecs" ecs.yaml
+	incus image rm ecs || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="ecs" ecs.yaml
 
 ecs-vm:
-	lxc image rm ecs-vm || true
-	sudo distrobuilder build-lxd -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-lxd="ecs-vm" --vm ecs.yaml
+	incus image rm ecs-vm || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=jammy -o image.variant=cloud -o source.url=$(URL) --import-into-incus="ecs-vm" --vm ecs.yaml
 
-all: go rust k8s ubuntu python docker ecs
+all: node gatsby hugo go python ecs
 
-vm: k8s-vm ubuntu-vm docker-vm
+vm: ecs-vm
