@@ -218,6 +218,7 @@ packages:
     - ca-certificates
     - curl
     - gnupg
+    - pinentry-tty
     - lsb-release
     action: install
 
@@ -346,7 +347,7 @@ actions:
 
   variants:
   - default
-  - cloud  
+  - cloud
 
 - trigger: post-packages
   action: |-
@@ -377,7 +378,7 @@ actions:
     su jldeen -c "curl -o /home/jldeen/.p10k.zsh https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/p10k" 
     su jldeen -c "curl -o /home/jldeen/.alias https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/alias"
     su jldeen -c "curl -o /home/jldeen/.kubefunc https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/kubefunc"
-    su jldeen -c "curl -o /home/jldeen/.functions https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/functions" 
+    su jldeen -c "curl -o /home/jldeen/.functions https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/functions"
     
     # Install docker
     apt-get install ca-certificates curl gnupg lsb-release -y
@@ -400,10 +401,6 @@ actions:
 
     # Install Git Config
     su jldeen -c "curl -o /home/jldeen/.gitconfig https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/gitconfig"
-
-    # Install AWS copilot
-    curl -Lo /usr/local/bin/copilot https://github.com/aws/copilot-cli/releases/latest/download/copilot-linux
-    chmod +x /usr/local/bin/copilot
     
     # Enable systemd-networkd
     systemctl enable systemd-networkd
@@ -466,8 +463,18 @@ actions:
     su jldeen -c "gpg --list-keys"
     su jldeen -c "gpg --pinentry-mode loopback --passphrase-file /home/jldeen/pass --import /home/jldeen/keys.asc"
 
-    su jldeen -c "git config --global user.signingkey 0A26547A7F82CA24"
-    su jldeen -c "git config --global commit.gpgsign true"
+    # Setup GPG
+    su jldeen -c "cat <<EOT >> ~/.gnupg/gpg-agent.conf   
+    default-cache-ttl 34560000
+    max-cache-ttl 34560000
+    allow-loopback-pinentry
+    EOT"
+
+    su jldeen -c "cat <<EOT >> ~/.gnupg/gpg.conf   
+    
+    use-agent
+    pinentry-mode loopback
+    EOT" 
 
     rm -rf /home/jldeen/keys.asc /home/jldeen/pass
   variants:
@@ -495,6 +502,8 @@ actions:
     useradd ${USERNAME} -s /bin/bash -m -U -G adm,video,users
     echo "${USERNAME} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/${USERNAME}
     chmod 600 /etc/sudoers.d/${USERNAME}
+
+    update-alternatives --set pinentry /usr/bin/pinentry-tty
 
     (
     cat << EOF
