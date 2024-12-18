@@ -454,7 +454,6 @@ actions:
     chown -R jldeen:jldeen /home/jldeen/.ssh/
     chown -R jldeen:jldeen /home/jldeen/.aws/
     su jldeen -c "chmod 600 /home/jldeen/.ssh/id_rsa"
-    mv /etc/sshkeys/credentials /home/jldeen/.aws/credentials
 
     # Setup GPG 
     mv /etc/sshkeys/keys.asc /home/jldeen/keys.asc
