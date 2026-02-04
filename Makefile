@@ -1,4 +1,4 @@
-ARCH := $(shell uname -i)
+ARCH := $(shell uname -m)
 
 ifeq ($(ARCH),x86_64)
         URL += http://archive.ubuntu.com/ubuntu

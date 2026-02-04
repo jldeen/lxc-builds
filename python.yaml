@@ -415,6 +415,7 @@ actions:
   - hirsute
   - impish
   - jammy
+  - noble
 
 - trigger: post-packages
   action: |-
