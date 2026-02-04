@@ -76,6 +76,7 @@ files:
   - hirsute
   - impish
   - jammy
+  - noble
   types:
   - container
   variants:
@@ -115,6 +116,7 @@ files:
   - hirsute
   - impish
   - jammy
+  - noble
   types:
   - vm
   variants:
@@ -210,6 +212,7 @@ packages:
     - sudo
     - vim
     - openssh-server
+    - build-essential
     - ssh-import-id
     - wget 
     - htop
@@ -290,6 +293,7 @@ packages:
     - hirsute
     - impish
     - jammy
+    - noble
     types:
     - vm
 
@@ -402,8 +406,9 @@ actions:
     curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
 
-    # Install nvm
-    su jldeen -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+    # Install Rust
+    su jldeen -c "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+    su jldeen -c "echo 'source $HOME/.cargo/env' >> /home/jldeen/.profile"
 
     # Install Git Config
     su jldeen -c "curl -o /home/jldeen/.gitconfig https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/gitconfig"

@@ -7,7 +7,8 @@ ifeq ($(ARCH),aarch64)
         URL += http://ports.ubuntu.com/ubuntu-ports
 endif
 
-.PHONY: node gatsby hugo go python ecs all vm
+.PHONY: node gatsby hugo go python rust terraform ecs all vm
+
 node:
 	incus image rm node || true
 	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="node"  node.yaml
@@ -28,18 +29,18 @@ python:
 	incus image rm python || true
 	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="python" python.yaml
 
-ecs:
-	incus image rm ecs || true
-	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="ecs" ecs.yaml
+rust:
+	incus image rm rust || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="rust" rust.yaml
 
-ecs-vm:
-	incus image rm ecs-vm || true
-	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="ecs-vm" --vm ecs.yaml
+terraform:
+	incus image rm terraform || true
+	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="terraform" terraform.yaml
 
 ubuntu:
 	incus image rm ubuntu || true
 	sudo distrobuilder build-incus -o image.architecture=$(ARCH) -o image.release=noble -o image.variant=cloud -o source.url=$(URL) --import-into-incus="ubuntu" ubuntu.yaml
 
-all: node gatsby hugo go python ecs ubuntu
+all: node gatsby hugo go python rust terraform ecs ubuntu
 
 vm: ecs-vm

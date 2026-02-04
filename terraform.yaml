@@ -76,6 +76,7 @@ files:
   - hirsute
   - impish
   - jammy
+  - noble
   types:
   - container
   variants:
@@ -115,6 +116,7 @@ files:
   - hirsute
   - impish
   - jammy
+  - noble
   types:
   - vm
   variants:
@@ -210,6 +212,7 @@ packages:
     - sudo
     - vim
     - openssh-server
+    - build-essential
     - ssh-import-id
     - wget 
     - htop
@@ -220,6 +223,7 @@ packages:
     - gnupg
     - pinentry-tty
     - lsb-release
+    - jq
     action: install
 
   - packages:
@@ -290,6 +294,7 @@ packages:
     - hirsute
     - impish
     - jammy
+    - noble
     types:
     - vm
 
@@ -402,8 +407,24 @@ actions:
     curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
 
-    # Install nvm
-    su jldeen -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
+    # Install Terraform
+    tfver=1.7.4
+    wget https://releases.hashicorp.com/terraform/${tfver}/terraform_${tfver}_linux_${arch}.zip
+    unzip terraform_${tfver}_linux_${arch}.zip -d /usr/local/bin
+    rm terraform_${tfver}_linux_${arch}.zip
+    
+    # Install Helm
+    su jldeen -c "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+
+    # Install kubectl
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${arch}/kubectl"
+    chmod +x kubectl && mv kubectl /usr/local/bin/
+
+    # Install AWS CLI
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-${arch}.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    ./aws/install
+    rm -rf aws awscliv2.zip
 
     # Install Git Config
     su jldeen -c "curl -o /home/jldeen/.gitconfig https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/gitconfig"
