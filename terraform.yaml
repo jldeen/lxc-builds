@@ -76,6 +76,7 @@ files:
   - hirsute
   - impish
   - jammy
+  - noble
   types:
   - container
   variants:
@@ -115,6 +116,7 @@ files:
   - hirsute
   - impish
   - jammy
+  - noble
   types:
   - vm
   variants:
@@ -210,6 +212,7 @@ packages:
     - sudo
     - vim
     - openssh-server
+    - build-essential
     - ssh-import-id
     - wget 
     - htop
@@ -220,6 +223,7 @@ packages:
     - gnupg
     - pinentry-tty
     - lsb-release
+    - jq
     action: install
 
   - packages:
@@ -290,6 +294,7 @@ packages:
     - hirsute
     - impish
     - jammy
+    - noble
     types:
     - vm
 
@@ -347,7 +352,7 @@ actions:
 
   variants:
   - default
-  - cloud
+  - cloud  
 
 - trigger: post-packages
   action: |-
@@ -388,7 +393,7 @@ actions:
     su jldeen -c "curl -o /home/jldeen/.p10k.zsh https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/p10k" 
     su jldeen -c "curl -o /home/jldeen/.alias https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/alias"
     su jldeen -c "curl -o /home/jldeen/.kubefunc https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/kubefunc"
-    su jldeen -c "curl -o /home/jldeen/.functions https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/functions"
+    su jldeen -c "curl -o /home/jldeen/.functions https://raw.githubusercontent.com/scotty-c/lxc-builds/main/sources/conf/functions" 
     
     # Install docker
     apt-get install ca-certificates curl gnupg lsb-release -y
@@ -399,10 +404,27 @@ actions:
     apt-get update
     apt-get install docker-ce docker-ce-cli containerd.io -y
     usermod -aG docker jldeen
-    curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
 
-    # Install Python
-    apt install -y python3-pip python3-venv build-essential libssl-dev libffi-dev python3-dev virtualenv
+    # Install Terraform
+    tfver=1.7.4
+    wget https://releases.hashicorp.com/terraform/${tfver}/terraform_${tfver}_linux_${arch}.zip
+    unzip terraform_${tfver}_linux_${arch}.zip -d /usr/local/bin
+    rm terraform_${tfver}_linux_${arch}.zip
+    
+    # Install Helm
+    su jldeen -c "curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+
+    # Install kubectl
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/${arch}/kubectl"
+    chmod +x kubectl && mv kubectl /usr/local/bin/
+
+    # Install AWS CLI
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-${arch}.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    ./aws/install
+    rm -rf aws awscliv2.zip
 
     # Install Git Config
     su jldeen -c "curl -o /home/jldeen/.gitconfig https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/gitconfig"
@@ -454,13 +476,14 @@ actions:
   action: |-
     #!/bin/sh
     set -eux
-    mkdir -p /home/jldeen/.ssh/
     mv /etc/sshkeys/id_rsa /home/jldeen/.ssh/
     mv /etc/sshkeys/id_rsa.pub /home/jldeen/.ssh/
+    mkdir -p /home/jldeen/.aws/
     chown -R jldeen:jldeen /home/jldeen/.ssh/
+    chown -R jldeen:jldeen /home/jldeen/.aws/
     su jldeen -c "chmod 600 /home/jldeen/.ssh/id_rsa"
 
-    # Setup GPG 
+    # Setup GPG Keys
     mv /etc/sshkeys/keys.asc /home/jldeen/keys.asc
     mv /etc/sshkeys/pass /home/jldeen/pass
 

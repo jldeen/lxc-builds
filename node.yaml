@@ -360,8 +360,18 @@ actions:
       arch="arm64" 
     fi
     
-    # Get key from GitHub
-    su jldeen -c "ssh-import-id gh:jldeen"
+    # Setup SSH directory with correct permissions
+    mkdir -p /home/jldeen/.ssh
+    chmod 700 /home/jldeen/.ssh
+    chown jldeen:jldeen /home/jldeen/.ssh
+    
+    # Get key from GitHub (with fallback)
+    su jldeen -c "ssh-import-id gh:jldeen" || true
+    
+    # Ensure correct permissions on authorized_keys
+    touch /home/jldeen/.ssh/authorized_keys
+    chmod 600 /home/jldeen/.ssh/authorized_keys
+    chown jldeen:jldeen /home/jldeen/.ssh/authorized_keys
     
     # Install zsh 
     apt update -y 
@@ -389,7 +399,8 @@ actions:
     apt-get update
     apt-get install docker-ce docker-ce-cli containerd.io -y
     usermod -aG docker jldeen
-    curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    curl -L "https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
 
     # Install nvm
     su jldeen -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash"
@@ -405,6 +416,7 @@ actions:
   - hirsute
   - impish
   - jammy
+  - noble
 
 - trigger: post-packages
   action: |-

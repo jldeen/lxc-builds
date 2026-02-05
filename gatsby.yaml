@@ -360,8 +360,18 @@ actions:
       arch="arm64" 
     fi
     
-    # Get key from GitHub
-    su jldeen -c "ssh-import-id gh:jldeen"
+    # Setup SSH directory with correct permissions
+    mkdir -p /home/jldeen/.ssh
+    chmod 700 /home/jldeen/.ssh
+    chown jldeen:jldeen /home/jldeen/.ssh
+    
+    # Get key from GitHub (with fallback)
+    su jldeen -c "ssh-import-id gh:jldeen" || true
+    
+    # Ensure correct permissions on authorized_keys
+    touch /home/jldeen/.ssh/authorized_keys
+    chmod 600 /home/jldeen/.ssh/authorized_keys
+    chown jldeen:jldeen /home/jldeen/.ssh/authorized_keys
     
     # Install zsh 
     apt update -y 
@@ -397,11 +407,6 @@ actions:
     # Install Node 18 and latest Gatsby
     nvm install 18 && nvm use 18 && npm install -g gatsby-cli
 
-    # Install AWS Cli
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
-    ./aws/install
-
     # Install Git Config
     su jldeen -c "curl -o /home/jldeen/.gitconfig https://raw.githubusercontent.com/jldeen/lxc-builds/main/sources/conf/gitconfig"
     
@@ -413,6 +418,7 @@ actions:
   - hirsute
   - impish
   - jammy
+  - noble
 
 - trigger: post-packages
   action: |-
@@ -451,11 +457,10 @@ actions:
   action: |-
     #!/bin/sh
     set -eux
+    mkdir -p /home/jldeen/.ssh/
     mv /etc/sshkeys/id_rsa /home/jldeen/.ssh/
     mv /etc/sshkeys/id_rsa.pub /home/jldeen/.ssh/
-    mkdir -p /home/jldeen/.aws/
     chown -R jldeen:jldeen /home/jldeen/.ssh/
-    chown -R jldeen:jldeen /home/jldeen/.aws/
     su jldeen -c "chmod 600 /home/jldeen/.ssh/id_rsa"
 
     # Setup GPG 
